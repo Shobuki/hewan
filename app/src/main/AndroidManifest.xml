@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Hewan"
+        tools:targetApi="31">
+
+        <!-- Aktivitas Utama -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Aktivitas Login -->
+        <activity android:name=".LoginActivity" android:exported="true" />
+
+        <!-- Aktivitas Register -->
+        <activity android:name=".RegisterActivity" android:exported="true" />
+
+        <!-- Aktivitas User Profile -->
+        <activity android:name=".SettingUserActivity" android:exported="true" />
+
+        <!-- Aktivitas Detail Rental -->
+        <activity android:name=".DetailRentalActivity" android:exported="true" />
+
+        <!-- Aktivitas Admin Setting Rental -->
+        <activity android:name=".AdminSettingRentalActivity" android:exported="true" />
+
+        <!-- Aktivitas List User (Admin) -->
+        <activity android:name=".AdminListUserActivity" android:exported="true" />
+
+        <!-- Aktivitas Detail Ensiklopedia -->
+        <activity android:name=".DetailEncyclopediaActivity" android:exported="true" />
+
+        <!-- Aktivitas Ensiklopedia -->
+        <activity android:name=".EncyclopediaActivity" android:exported="true" />
+
+        <!-- Aktivitas My Rental -->
+        <activity android:name=".MyRentalActivity" android:exported="true" />
+
+    </application>
+
+</manifest>

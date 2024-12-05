@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "51042915884",
+    "project_id": "hewan-2a8e4",
+    "storage_bucket": "hewan-2a8e4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:51042915884:android:ee25f45416276710936389",
+        "android_client_info": {
+          "package_name": "com.example.hewan"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBdWtBqm0jWmdZlni5wEhobY93Tkf1CBlU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

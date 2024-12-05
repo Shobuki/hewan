@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:padding="16dp">
+
+    <EditText
+        android:id="@+id/inputPetId"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Pet ID"
+        android:layout_marginBottom="8dp" />
+
+    <EditText
+        android:id="@+id/inputUserId"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="User ID"
+        android:layout_marginBottom="8dp" />
+
+    <EditText
+        android:id="@+id/inputStartDate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Start Date (YYYY-MM-DD)"
+        android:layout_marginBottom="8dp" />
+
+    <EditText
+        android:id="@+id/inputEndDate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="End Date (YYYY-MM-DD)"
+        android:layout_marginBottom="16dp" />
+
+    <Button
+        android:id="@+id/btnAddRental"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Add Rental"
+        android:backgroundTint="@color/primary"
+        android:textColor="@android:color/white" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

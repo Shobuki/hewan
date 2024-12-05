@@ -1,0 +1,38 @@
+<androidx.appcompat.widget.Toolbar
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/primary"
+    android:elevation="4dp"
+    android:padding="8dp">
+
+    <!-- Judul di Pojok Kiri -->
+    <TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start|center_vertical"
+        android:text="MyPetz"
+        android:textSize="20sp"
+        android:textColor="@android:color/white"
+        android:paddingStart="16dp" />
+
+    <!-- Tombol Login -->
+    <Button
+        android:id="@+id/btnLogin"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|center_vertical"
+        android:text="Login"
+        android:textColor="@android:color/white"
+        android:visibility="visible" />
+
+    <!-- Foto Profil -->
+    <ImageView
+        android:id="@+id/btnProfile"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_gravity="end|center_vertical"
+        android:visibility="gone"
+        android:contentDescription="Profile Picture" />
+</androidx.appcompat.widget.Toolbar>
