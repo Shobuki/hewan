@@ -1,11 +1,12 @@
+<!-- res/menu/profile_menu.xml -->
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@+id/menu_settings_user"
-        android:title="Settings User" />
+        android:id="@+id/menuUserProfile"
+        android:title="User Profile" />
     <item
-        android:id="@+id/menu_my_rental"
+        android:id="@+id/menuMyRental"
         android:title="My Rentals" />
     <item
-        android:id="@+id/menu_logout"
+        android:id="@+id/menuLogout"
         android:title="Logout" />
 </menu>

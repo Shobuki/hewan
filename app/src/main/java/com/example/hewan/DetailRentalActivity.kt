@@ -2,14 +2,12 @@ package com.example.hewan
 
 import android.app.DatePickerDialog
 import android.os.Bundle
-import android.view.View
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.media3.common.util.Log
 import com.bumptech.glide.Glide
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
@@ -41,14 +39,14 @@ class DetailRentalActivity : AppCompatActivity() {
 
         if (pet.id.isEmpty()) {
             Toast.makeText(this, "Pet ID tidak ditemukan!", Toast.LENGTH_SHORT).show()
-            Log.e("DetailRentalActivity", "Pet ID kosong saat menerima data dari Intent.")
             finish()
             return
-        } else {
-            Log.d("DetailRentalActivity", "Pet ID diterima: ${pet.id}")
         }
 
-        // Bind views
+        setupViews()
+    }
+
+    private fun setupViews() {
         val petImage: ImageView = findViewById(R.id.petImage)
         val petName: TextView = findViewById(R.id.petName)
         val petCategory: TextView = findViewById(R.id.petCategory)
@@ -57,7 +55,6 @@ class DetailRentalActivity : AppCompatActivity() {
         val petDescription: TextView = findViewById(R.id.petDescription)
         val rentButton: Button = findViewById(R.id.btnRent)
 
-        // Populate views
         Glide.with(this).load(pet.photo).placeholder(R.drawable.placeholder_image).into(petImage)
         petName.text = pet.name
         petCategory.text = "Category: ${pet.category}"
@@ -65,7 +62,6 @@ class DetailRentalActivity : AppCompatActivity() {
         petStock.text = "Stock: ${pet.stok}"
         petDescription.text = pet.description
 
-        // Handle Rent Button
         rentButton.setOnClickListener {
             if (pet.stok > 0) {
                 showRentPopup()
@@ -75,8 +71,6 @@ class DetailRentalActivity : AppCompatActivity() {
         }
     }
 
-
-
     private fun showRentPopup() {
         val dialogView = layoutInflater.inflate(R.layout.popup_add_rental_list, null)
         val startDateText: TextView = dialogView.findViewById(R.id.startDate)
@@ -84,31 +78,22 @@ class DetailRentalActivity : AppCompatActivity() {
         val confirmButton: Button = dialogView.findViewById(R.id.btnConfirm)
 
         val calendar = Calendar.getInstance()
-
-        // Set default dates
         val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+
         startDateText.text = dateFormat.format(calendar.time)
         endDateText.text = dateFormat.format(calendar.time)
 
-        // Disable submit button jika stok kosong
-        if (pet.stok <= 0) {
-            confirmButton.isEnabled = false
-            Toast.makeText(this, "Stok kosong, tidak bisa menyewa!", Toast.LENGTH_SHORT).show()
-        } else {
-            confirmButton.isEnabled = true
-        }
+        confirmButton.isEnabled = pet.stok > 0
 
-        // Date picker for start date
         startDateText.setOnClickListener {
             showDatePickerDialog { date ->
                 startDateText.text = date
                 if (endDateText.text.toString() < date) {
-                    endDateText.text = date // Adjust end date if it's earlier than start date
+                    endDateText.text = date
                 }
             }
         }
 
-        // Date picker for end date
         endDateText.setOnClickListener {
             showDatePickerDialog { date ->
                 if (date >= startDateText.text.toString()) {
@@ -124,7 +109,6 @@ class DetailRentalActivity : AppCompatActivity() {
             .setCancelable(true)
             .create()
 
-        // Confirm rent action
         confirmButton.setOnClickListener {
             val startDate = startDateText.text.toString()
             val endDate = endDateText.text.toString()
@@ -140,7 +124,6 @@ class DetailRentalActivity : AppCompatActivity() {
         dialog.show()
     }
 
-
     private fun showDatePickerDialog(onDateSelected: (String) -> Unit) {
         val calendar = Calendar.getInstance()
         val datePickerDialog = DatePickerDialog(
@@ -153,7 +136,7 @@ class DetailRentalActivity : AppCompatActivity() {
             calendar.get(Calendar.MONTH),
             calendar.get(Calendar.DAY_OF_MONTH)
         )
-        datePickerDialog.datePicker.minDate = calendar.timeInMillis // Set minimum date to today
+        datePickerDialog.datePicker.minDate = calendar.timeInMillis
         datePickerDialog.show()
     }
 
@@ -163,49 +146,37 @@ class DetailRentalActivity : AppCompatActivity() {
             return
         }
 
-        if (pet.id.isEmpty()) {
-            Toast.makeText(this, "Pet ID tidak valid!", Toast.LENGTH_SHORT).show()
-            Log.e("DetailRentalActivity", "Pet ID kosong saat mencoba menyewa.")
-            return
-        }
-
         val rentalRef = database.getReference("rentals")
         val petRef = database.getReference("pets").child(pet.id)
+
         petRef.get().addOnSuccessListener { snapshot ->
             if (snapshot.exists()) {
-                Log.d("DetailRentalActivity", "Pet ditemukan di Firebase: ${snapshot.key}")
+                val rentalId = rentalRef.push().key ?: return@addOnSuccessListener
+                val rental = Rental(
+                    id = rentalId,
+                    petId = pet.id,
+                    userId = currentUser.uid,
+                    startDate = startDate,
+                    endDate = endDate
+                )
+
+                petRef.child("stok").setValue(pet.stok - 1).addOnCompleteListener { updateTask ->
+                    if (updateTask.isSuccessful) {
+                        rentalRef.child(rentalId).setValue(rental).addOnCompleteListener { saveTask ->
+                            if (saveTask.isSuccessful) {
+                                Toast.makeText(this, "Penyewaan berhasil!", Toast.LENGTH_SHORT).show()
+                                finish()
+                            } else {
+                                Toast.makeText(this, "Gagal menyimpan data penyewaan!", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    } else {
+                        Toast.makeText(this, "Gagal memperbarui stok!", Toast.LENGTH_SHORT).show()
+                    }
+                }
             } else {
-                Log.e("DetailRentalActivity", "Pet ID tidak ditemukan di Firebase: ${pet.id}")
-                Toast.makeText(this, "Data hewan tidak ditemukan di server.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Hewan tidak ditemukan di server!", Toast.LENGTH_SHORT).show()
             }
         }
-
-
-        val rentalId = rentalRef.push().key ?: return
-        val rental = Rental(
-            id = rentalId,
-            petId = pet.id,
-            userId = currentUser.uid,
-            startDate = startDate,
-            endDate = endDate
-        )
-
-        Log.d("DetailRentalActivity", "Menyimpan rental: $rental")
-
-        // Save rental and update stock
-        petRef.child("stok").setValue(pet.stok - 1).addOnCompleteListener { updateTask ->
-            if (updateTask.isSuccessful) {
-                Log.d("DetailRentalActivity", "Stok berhasil diperbarui untuk Pet ID: ${pet.id}")
-                Toast.makeText(this, "Penyewaan berhasil!", Toast.LENGTH_SHORT).show()
-                // Kirim sinyal ke MainActivity untuk memperbarui data
-                finish() // Close activity
-            } else {
-                Log.e("DetailRentalActivity", "Gagal memperbarui stok hewan.")
-                Toast.makeText(this, "Gagal memperbarui stok hewan!", Toast.LENGTH_SHORT).show()
-            }
-        }
-
     }
-
-
 }

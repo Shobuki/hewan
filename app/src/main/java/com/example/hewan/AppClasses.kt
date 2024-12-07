@@ -1,5 +1,6 @@
 package com.example.hewan
 
+import android.util.Log
 import okhttp3.OkHttpClient
 import retrofit2.Call
 import retrofit2.Retrofit
@@ -7,6 +8,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Headers
 import retrofit2.http.Query
+import java.text.SimpleDateFormat
+import java.util.*
 
 // Model Classes
 data class User(
@@ -40,13 +43,41 @@ data class Breed(
 )
 
 
+
+
 data class Rental(
     val id: String = "",
     val petId: String = "",
     val userId: String = "",
     val startDate: String = "",
     val endDate: String = "",
-)
+    var status: String = "" // This will store the status (Active, Overdue, Returned)
+) {
+
+    // Function to calculate and update the rental status
+    fun updateStatus() {
+        try {
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            val currentDate = Calendar.getInstance().timeInMillis
+            val startDateMillis = dateFormat.parse(startDate)?.time ?: 0L
+            val endDateMillis = dateFormat.parse(endDate)?.time ?: 0L
+
+            status = when {
+                currentDate < startDateMillis -> "Upcoming"  // Rental belum dimulai
+                currentDate in startDateMillis..endDateMillis -> "Active"  // Rental sedang berlangsung
+                currentDate > endDateMillis -> "Overdue"  // Rental sudah selesai, tapi belum dikembalikan
+                else -> "Unknown"
+            }
+
+            Log.d("Rental", "Updated rental status: $status")
+        } catch (e: Exception) {
+            Log.e("Rental", "Error updating status: ${e.message}")
+            status = "Unknown"
+        }
+    }
+}
+
+
 
 // API Interface
 interface PetApi {

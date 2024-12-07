@@ -53,6 +53,7 @@
 
         <!-- Aktivitas My Rental -->
         <activity android:name=".MyRentalActivity" android:exported="true" />
+        <activity android:name=".MyRentalHistoryActivity" android:exported="true" />
 
     </application>
 

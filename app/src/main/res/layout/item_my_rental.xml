@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <!-- Rental Start Date -->
+    <TextView
+        android:id="@+id/rentalStartDate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Start Date: 2024-12-01"
+        android:textAppearance="?attr/textAppearanceBody1" />
+
+    <!-- Rental End Date -->
+    <TextView
+        android:id="@+id/rentalEndDate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="End Date: 2024-12-07"
+        android:textAppearance="?attr/textAppearanceBody1" />
+
+    <!-- Pet Name -->
+    <TextView
+        android:id="@+id/petName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Pet Name: Golden Retriever"
+        android:textAppearance="?attr/textAppearanceBody1" />
+
+    <!-- Rental Status -->
+    <TextView
+        android:id="@+id/rentalStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Status: Active"
+        android:textAppearance="?attr/textAppearanceBody1"
+        android:textColor="@android:color/holo_green_dark" />
+</LinearLayout>

@@ -1,17 +1,19 @@
 package com.example.hewan
 
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
 import android.util.Log
-import android.widget.Button
-import android.widget.EditText
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import com.example.hewan.MainActivity
-import com.example.hewan.R
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
 
 class UserProfileActivity : AppCompatActivity() {
 
@@ -19,119 +21,144 @@ class UserProfileActivity : AppCompatActivity() {
     private lateinit var etName: EditText
     private lateinit var etEmail: EditText
     private lateinit var btnSaveChanges: Button
+    private lateinit var btnUploadProfile: Button
+    private lateinit var profileImageView: ImageView
+    private var profileImageUri: Uri? = null
     private lateinit var auth: FirebaseAuth
     private val database = FirebaseDatabase.getInstance().reference
+
+    companion object {
+        private const val TAG = "UserProfileActivity"
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_user_profile)
 
-        // Initialize Firebase Auth
+        // Inisialisasi Firebase Auth
         auth = FirebaseAuth.getInstance()
 
-        // Find views by ID
+        // Inisialisasi komponen UI
         tvWelcome = findViewById(R.id.tvWelcome)
         etName = findViewById(R.id.etName)
         etEmail = findViewById(R.id.etEmail)
         btnSaveChanges = findViewById(R.id.btnSaveChanges)
+        btnUploadProfile = findViewById(R.id.btnUploadProfile)
+        profileImageView = findViewById(R.id.profileImageView)
 
+        // Ambil ID pengguna saat ini
         val userId = auth.currentUser?.uid
-        Log.d("UserProfile", "Current user ID: $userId")
+        Log.d(TAG, "Current user ID: $userId")
 
         if (userId != null) {
-            Log.d("UserProfile", "Attempting to fetch user data for userId: $userId")
-
-            // Fetch user data from Firebase
-            database.child("users").child(userId).get()
-                .addOnSuccessListener { snapshot ->
-                    Log.d("UserProfile", "Snapshot received: $snapshot")
-
-                    if (snapshot.exists()) {
-                        val name = snapshot.child("name").getValue(String::class.java)
-                        val email = snapshot.child("email").getValue(String::class.java)
-                        Log.d("UserProfile", "Fetched user data: name = $name, email = $email")
-
-                        // Set the current name and email in the EditText fields
-                        runOnUiThread {
-                            if (name != null) {
-                                tvWelcome.text = "Welcome, $name"
-                                etName.setText(name)
-                            }
-                            if (email != null) {
-                                etEmail.setText(email)
-                            }
-                        }
-                    } else {
-                        runOnUiThread {
-                            tvWelcome.text = "User data not found"
-                        }
-                    }
-                }
-                .addOnFailureListener { exception ->
-                    Log.e("UserProfile", "Failed to fetch data: ${exception.message}")
-                    runOnUiThread {
-                        tvWelcome.text = "Error loading user data"
-                    }
-                }
+            loadProfileImage(userId) // Muat gambar profil dari cache
+            fetchUserData(userId) // Ambil data pengguna dari Firebase
         } else {
-            Log.e("UserProfile", "User ID is null")
+            Log.e(TAG, "User ID is null")
             tvWelcome.text = "User not logged in"
         }
 
-        // Save changes when the button is clicked
-        btnSaveChanges.setOnClickListener {
-            val updatedName = etName.text.toString()
-            val updatedEmail = etEmail.text.toString()
+        // Tombol unggah gambar
+        btnUploadProfile.setOnClickListener {
+            pickImageFromGallery()
+        }
 
-            // Validate inputs
-            if (updatedName.isNotEmpty() && updatedEmail.isNotEmpty()) {
+        // Tombol simpan perubahan
+        btnSaveChanges.setOnClickListener {
+            val updatedName = etName.text.toString().trim()
+            val updatedEmail = etEmail.text.toString().trim()
+
+            if (userId != null && updatedName.isNotEmpty() && updatedEmail.isNotEmpty()) {
                 updateUserData(userId, updatedName, updatedEmail)
             } else {
-                Toast.makeText(this, "Please fill out both fields", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Please fill out all fields", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
-    private fun updateUserData(userId: String?, name: String, email: String) {
-        if (userId != null) {
-            val userUpdates = mapOf(
-                "name" to name,
-                "email" to email
-            )
+    private fun pickImageFromGallery() {
+        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+        startActivityForResult(intent, 1000)
+    }
 
-            // Update the user data in Firebase
-            database.child("users").child(userId).updateChildren(userUpdates)
-                .addOnSuccessListener {
-                    // Data updated successfully
-                    Toast.makeText(this, "Data updated successfully", Toast.LENGTH_SHORT).show()
-                    Log.d("UserProfile", "User data updated: name = $name, email = $email")
-
-                    // Update UI with the new data
-                    runOnUiThread {
-                        // Update EditText with new values
-                        etName.setText(name)
-                        etEmail.setText(email)
-
-                        // Optionally, update the TextView as well
-                        tvWelcome.text = "Welcome, $name"
-                    }
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 1000 && resultCode == RESULT_OK) {
+            profileImageUri = data?.data
+            profileImageUri?.let {
+                profileImageView.setImageURI(it)
+                val userId = auth.currentUser?.uid
+                if (userId != null) {
+                    saveProfileImage(it, userId)
                 }
-                .addOnFailureListener { exception ->
-                    // Show error if update fails
-                    Toast.makeText(this, "Failed to update data: ${exception.message}", Toast.LENGTH_SHORT).show()
-                    Log.e("UserProfile", "Error updating data: ${exception.message}")
-                }
+            }
         }
     }
 
-
-    override fun onStart() {
-        super.onStart()
-        if (auth.currentUser == null) {
-            // Redirect to login if user is not logged in
-            val intent = Intent(this@UserProfileActivity, MainActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            startActivity(intent)
+    private fun saveProfileImage(uri: Uri, userId: String) {
+        try {
+            val bitmap = MediaStore.Images.Media.getBitmap(contentResolver, uri)
+            val file = File(cacheDir, "$userId.png")
+            val outputStream = FileOutputStream(file)
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+            outputStream.flush()
+            outputStream.close()
+            Toast.makeText(this, "Profile image saved successfully", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to save profile image: ${e.message}")
+            Toast.makeText(this, "Failed to save profile image", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun loadProfileImage(userId: String) {
+        try {
+            val file = File(cacheDir, "$userId.png")
+            if (file.exists()) {
+                val bitmap = BitmapFactory.decodeStream(FileInputStream(file))
+                profileImageView.setImageBitmap(bitmap)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to load profile image: ${e.message}")
+        }
+    }
+
+    private fun fetchUserData(userId: String) {
+        database.child("users").child(userId).get()
+            .addOnSuccessListener { snapshot ->
+                if (snapshot.exists()) {
+                    val name = snapshot.child("name").getValue(String::class.java)
+                    val email = snapshot.child("email").getValue(String::class.java)
+                    Log.d(TAG, "Fetched user data: name = $name, email = $email")
+                    if (name != null) {
+                        tvWelcome.text = "Welcome, $name"
+                        etName.setText(name)
+                    }
+                    if (email != null) {
+                        etEmail.setText(email)
+                    }
+                } else {
+                    tvWelcome.text = "User data not found"
+                }
+            }
+            .addOnFailureListener { exception ->
+                Log.e(TAG, "Failed to fetch user data: ${exception.message}")
+                tvWelcome.text = "Error loading user data"
+            }
+    }
+
+    private fun updateUserData(userId: String, name: String, email: String) {
+        val updates = mapOf(
+            "name" to name,
+            "email" to email
+        )
+        database.child("users").child(userId).updateChildren(updates)
+            .addOnSuccessListener {
+                Toast.makeText(this, "Data updated successfully", Toast.LENGTH_SHORT).show()
+                tvWelcome.text = "Welcome, $name"
+            }
+            .addOnFailureListener { exception ->
+                Log.e(TAG, "Failed to update user data: ${exception.message}")
+                Toast.makeText(this, "Failed to update data", Toast.LENGTH_SHORT).show()
+            }
     }
 }
