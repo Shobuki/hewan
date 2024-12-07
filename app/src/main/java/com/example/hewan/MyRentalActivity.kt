@@ -1,9 +1,7 @@
 package com.example.hewan
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -14,78 +12,47 @@ import com.google.firebase.database.*
 class MyRentalActivity : AppCompatActivity() {
 
     private lateinit var recyclerView: RecyclerView
-    private lateinit var btnListRental: Button
+    private lateinit var database: DatabaseReference
+    private lateinit var rentalAdapter: MyRentalAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.user_my_rental)
+        setContentView(R.layout.activity_my_rental)
 
-        // Inisialisasi
-        recyclerView = findViewById(R.id.recyclerViewUserRentals)
-        btnListRental = findViewById(R.id.btnListRental)
+        recyclerView = findViewById(R.id.recyclerViewMyRental)
+        recyclerView.layoutManager = LinearLayoutManager(this)
 
-        // Default tombol list rental tidak terlihat
-        btnListRental.visibility = View.GONE
-
-        // Cek Role User
-        checkUserRole()
-
-        // Load History Rental
-        loadUserRentals()
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser != null) {
+            // Fetch rental data for current user
+            fetchUserRentals(currentUser.uid)
+        } else {
+            Toast.makeText(this, "User is not logged in", Toast.LENGTH_SHORT).show()
+        }
     }
 
-    private fun checkUserRole() {
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        if (currentUser == null) {
-            Toast.makeText(this, "Anda harus login terlebih dahulu", Toast.LENGTH_SHORT).show()
-            finish()
-            return
-        }
+    private fun fetchUserRentals(userId: String) {
+        // Reference to rentals node in Firebase
+        database = FirebaseDatabase.getInstance().getReference("rentals")
 
-        val dbRef = FirebaseDatabase.getInstance().getReference("users").child(currentUser.uid)
-        dbRef.addListenerForSingleValueEvent(object : ValueEventListener {
+        database.orderByChild("userId").equalTo(userId).addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val role = snapshot.child("role").value as? String ?: "user"
-                if (role == "admin") {
-                    btnListRental.visibility = View.VISIBLE
-                    btnListRental.setOnClickListener {
-                        startActivity(Intent(this@MyRentalActivity, AdminListRentalActivity::class.java))
+                val rentals = mutableListOf<Rental>()
+                for (rentalSnapshot in snapshot.children) {
+                    val rental = rentalSnapshot.getValue(Rental::class.java)
+                    if (rental != null) {
+                        rentals.add(rental)
                     }
                 }
+
+                // Set up the adapter to show the rentals
+                rentalAdapter = MyRentalAdapter(rentals)
+                recyclerView.adapter = rentalAdapter
             }
 
             override fun onCancelled(error: DatabaseError) {
-                Toast.makeText(this@MyRentalActivity, "Gagal memuat data pengguna", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@MyRentalActivity, "Failed to load rentals", Toast.LENGTH_SHORT).show()
             }
         })
-    }
-
-    private fun loadUserRentals() {
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        if (currentUser == null) {
-            Toast.makeText(this, "Anda harus login terlebih dahulu", Toast.LENGTH_SHORT).show()
-            finish()
-            return
-        }
-
-        val dbRef = FirebaseDatabase.getInstance().getReference("rentals")
-        dbRef.orderByChild("userId").equalTo(currentUser.uid)
-            .addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val rentals = mutableListOf<Rental>()
-                    for (data in snapshot.children) {
-                        val rental = data.getValue(Rental::class.java)
-                        if (rental != null) {
-                            rentals.add(rental)
-                        }
-                    }
-                    recyclerView.layoutManager = LinearLayoutManager(this@MyRentalActivity)
-                    recyclerView.adapter = RentalAdapter(rentals)
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-                    Toast.makeText(this@MyRentalActivity, "Gagal memuat daftar rental", Toast.LENGTH_SHORT).show()
-                }
-            })
     }
 }

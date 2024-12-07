@@ -54,10 +54,23 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation(libs.firebase.database.ktx)
+    implementation(libs.androidx.material3.android)
+    implementation(libs.firebase.storage.ktx)
+    implementation(libs.firebase.firestore.ktx)
+    implementation(libs.androidx.recyclerview)
+    implementation(libs.androidx.media3.common.ktx)
 
 
     // Testing Libraries
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+    implementation ("com.squareup.retrofit2:retrofit:2.9.0'")
+    implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation ("com.google.code.gson:gson:2.10")
+
+    implementation ("com.github.bumptech.glide:glide:4.15.1")
+    annotationProcessor ("com.github.bumptech.glide:compiler:4.15.1")
+
 }

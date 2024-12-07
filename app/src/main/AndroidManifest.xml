@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -12,6 +12,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Hewan"
         tools:targetApi="31">
+
+
 
         <!-- Aktivitas Utama -->
         <activity
@@ -30,13 +32,15 @@
         <activity android:name=".RegisterActivity" android:exported="true" />
 
         <!-- Aktivitas User Profile -->
-        <activity android:name=".SettingUserActivity" android:exported="true" />
+        <activity android:name=".UserProfileActivity" android:exported="true" />
 
         <!-- Aktivitas Detail Rental -->
         <activity android:name=".DetailRentalActivity" android:exported="true" />
 
         <!-- Aktivitas Admin Setting Rental -->
         <activity android:name=".AdminSettingRentalActivity" android:exported="true" />
+
+        <activity android:name=".AdminDetailSettingRentalActivity" android:exported="true" />
 
         <!-- Aktivitas List User (Admin) -->
         <activity android:name=".AdminListUserActivity" android:exported="true" />

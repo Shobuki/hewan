@@ -1,20 +1,14 @@
 package com.example.hewan
 
-import android.content.Intent
-import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.widget.TextView
-import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.FirebaseDatabase
+import okhttp3.OkHttpClient
+import retrofit2.Call
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.GET
+import retrofit2.http.Headers
+import retrofit2.http.Query
 
-
-// **Model Classes**
+// Model Classes
 data class User(
     val id: String = "",
     val name: String = "",
@@ -25,12 +19,26 @@ data class User(
 data class Pet(
     val id: String = "",
     val name: String = "",
-    val species: String = "",
-    val photoUrl: String = "",
-    val description: String = "",
-    val status: String = "available",
-    val stok: Int = 0
+    val species: String? = null,
+    val category: String = "",
+    val photo: String? = null,
+    val description: String? = null,
+    val stok: Int = 0,
+    val status: String = "Ready" // Status ketersediaan hewan
 )
+
+data class PetApiResponse(
+    val id: String,
+    val url: String,
+    val breeds: List<Breed>? = null
+)
+
+data class Breed(
+    val id: String,
+    val name: String,
+    val description: String
+)
+
 
 data class Rental(
     val id: String = "",
@@ -38,77 +46,52 @@ data class Rental(
     val userId: String = "",
     val startDate: String = "",
     val endDate: String = "",
-    val status: String = "pending"
 )
 
+// API Interface
+interface PetApi {
+    @Headers("x-api-key: live_vJqDS0PmM2zTWB58QRNnASfiqRJyPQaOUYIoz3aB7cnAKzPIHDrykNYZs3CZKcMS") // API Key Cat
+    @GET("v1/images/search")
+    fun getCatImages(
+        @Query("limit") limit: Int = 20,
+        @Query("page") page: Int = 0, // Halaman pertama
+        @Query("has_breeds") hasBreeds: Int = 1
+    ): Call<List<PetApiResponse>>
 
-
-
-
-
-// **DetailRentalActivity**
-
-
-// **SettingUserActivity**
-class SettingUserActivity : AppCompatActivity() {
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_user_profile)
-
-        loadUserProfile()
-    }
-
-    private fun loadUserProfile() {
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        if (currentUser == null) {
-            Toast.makeText(this, "Silakan login terlebih dahulu", Toast.LENGTH_SHORT).show()
-            finish()
-            return
-        }
-
-        val dbRef = FirebaseDatabase.getInstance().getReference("users")
-        dbRef.child(currentUser.uid).get()
-            .addOnSuccessListener { snapshot ->
-                val user = snapshot.getValue(User::class.java)
-                if (user != null) {
-                    Toast.makeText(this, "User: ${user.name}", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(this, "Data pengguna tidak ditemukan", Toast.LENGTH_SHORT).show()
-                }
-            }
-            .addOnFailureListener {
-                Toast.makeText(this, "Gagal memuat profil pengguna", Toast.LENGTH_SHORT).show()
-            }
-    }
-
+    @Headers("x-api-key: live_rrL8on1whavz1GIZF9GFIeQOcflj3R08KBQjV1xzZg9JvqjV0Lgs1MGJWtR89UpN") // API Key Dog
+    @GET("v1/images/search")
+    fun getDogImages(
+        @Query("limit") limit: Int = 20,
+        @Query("page") page: Int = 0, // Halaman pertama
+        @Query("has_breeds") hasBreeds: Int = 1
+    ): Call<List<PetApiResponse>>
 }
 
-// **PetAdapter**
-class PetAdapter(
-    private val pets: List<Pet>,
-    private val onClick: ((Pet) -> Unit)?
-) : RecyclerView.Adapter<PetAdapter.PetViewHolder>() {
+// Retrofit Client
+object ApiClient {
+    private val okHttpClient = OkHttpClient()
 
-    class PetViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val tvPetName: TextView = itemView.findViewById(R.id.tvPetName)
-        private val tvPetSpecies: TextView = itemView.findViewById(R.id.tvPetSpecies)
-
-        fun bind(pet: Pet, onClick: ((Pet) -> Unit)?) {
-            tvPetName.text = pet.name
-            tvPetSpecies.text = pet.species
-            itemView.setOnClickListener { onClick?.invoke(pet) }
-        }
+    private val retrofitCat by lazy {
+        Retrofit.Builder()
+            .baseUrl("https://api.thecatapi.com/") // Base URL untuk The Cat API
+            .addConverterFactory(GsonConverterFactory.create())
+            .client(okHttpClient)
+            .build()
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PetViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_pet, parent, false)
-        return PetViewHolder(view)
+    private val retrofitDog by lazy {
+        Retrofit.Builder()
+            .baseUrl("https://api.thedogapi.com/") // Base URL untuk The Dog API
+            .addConverterFactory(GsonConverterFactory.create())
+            .client(okHttpClient)
+            .build()
     }
 
-    override fun onBindViewHolder(holder: PetViewHolder, position: Int) {
-        holder.bind(pets[position], onClick)
+    val catApi: PetApi by lazy {
+        retrofitCat.create(PetApi::class.java)
     }
 
-    override fun getItemCount() = pets.size
+    val dogApi: PetApi by lazy {
+        retrofitDog.create(PetApi::class.java)
+    }
 }

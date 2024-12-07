@@ -1,5 +1,6 @@
 package com.example.hewan
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
@@ -7,88 +8,130 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.hewan.MainActivity
+import com.example.hewan.R
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.FirebaseDatabase
 
 class UserProfileActivity : AppCompatActivity() {
 
     private lateinit var tvWelcome: TextView
-    private lateinit var tvUserEmail: TextView
-    private lateinit var inputName: EditText
-    private lateinit var inputEmail: EditText
-    private lateinit var btnSaveProfile: Button
+    private lateinit var etName: EditText
+    private lateinit var etEmail: EditText
+    private lateinit var btnSaveChanges: Button
+    private lateinit var auth: FirebaseAuth
+    private val database = FirebaseDatabase.getInstance().reference
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_user_profile)
 
-        // Inisialisasi Komponen
+        // Initialize Firebase Auth
+        auth = FirebaseAuth.getInstance()
+
+        // Find views by ID
         tvWelcome = findViewById(R.id.tvWelcome)
-        tvUserEmail = findViewById(R.id.tvUserEmail)
-        inputName = findViewById(R.id.inputName)
-        inputEmail = findViewById(R.id.inputEmail)
-        btnSaveProfile = findViewById(R.id.btnSaveProfile)
+        etName = findViewById(R.id.etName)
+        etEmail = findViewById(R.id.etEmail)
+        btnSaveChanges = findViewById(R.id.btnSaveChanges)
 
-        val currentUser = FirebaseAuth.getInstance().currentUser
+        val userId = auth.currentUser?.uid
+        Log.d("UserProfile", "Current user ID: $userId")
 
-        // Menampilkan nama dan email pengguna
-        if (currentUser != null) {
-            val userId = currentUser.uid
-            val dbRef = FirebaseHelper.getReference("users").child(userId)
+        if (userId != null) {
+            Log.d("UserProfile", "Attempting to fetch user data for userId: $userId")
 
-            // Menggunakan FirebaseHelper untuk mengambil data pengguna
-            dbRef.addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
+            // Fetch user data from Firebase
+            database.child("users").child(userId).get()
+                .addOnSuccessListener { snapshot ->
+                    Log.d("UserProfile", "Snapshot received: $snapshot")
+
                     if (snapshot.exists()) {
-                        val name = snapshot.child("name").value as? String ?: "User"
-                        val email = snapshot.child("email").value as? String ?: "email@example.com"
-                        Log.d("UserProfileActivity", "Name: $name, Email: $email")
-                        tvWelcome.text = "Welcome, $name"
-                        tvUserEmail.text = email
+                        val name = snapshot.child("name").getValue(String::class.java)
+                        val email = snapshot.child("email").getValue(String::class.java)
+                        Log.d("UserProfile", "Fetched user data: name = $name, email = $email")
 
-                        inputName.setText(name)
-                        inputEmail.setText(email)
+                        // Set the current name and email in the EditText fields
+                        runOnUiThread {
+                            if (name != null) {
+                                tvWelcome.text = "Welcome, $name"
+                                etName.setText(name)
+                            }
+                            if (email != null) {
+                                etEmail.setText(email)
+                            }
+                        }
                     } else {
-                        Log.e("UserProfileActivity", "Snapshot does not exist.")
-                        Toast.makeText(this@UserProfileActivity, "Data pengguna tidak ditemukan", Toast.LENGTH_SHORT).show()
+                        runOnUiThread {
+                            tvWelcome.text = "User data not found"
+                        }
                     }
                 }
-
-                override fun onCancelled(error: DatabaseError) {
-                    Log.e("UserProfileActivity", "Database error: ${error.message}")
-                    Toast.makeText(this@UserProfileActivity, "Gagal memuat data pengguna", Toast.LENGTH_SHORT).show()
+                .addOnFailureListener { exception ->
+                    Log.e("UserProfile", "Failed to fetch data: ${exception.message}")
+                    runOnUiThread {
+                        tvWelcome.text = "Error loading user data"
+                    }
                 }
-            })
+        } else {
+            Log.e("UserProfile", "User ID is null")
+            tvWelcome.text = "User not logged in"
         }
 
-        // Tombol Simpan
-        btnSaveProfile.setOnClickListener {
-            val updatedName = inputName.text.toString()
-            val updatedEmail = inputEmail.text.toString()
+        // Save changes when the button is clicked
+        btnSaveChanges.setOnClickListener {
+            val updatedName = etName.text.toString()
+            val updatedEmail = etEmail.text.toString()
 
-            if (updatedName.isEmpty() || updatedEmail.isEmpty()) {
-                Toast.makeText(this, "Nama dan email harus diisi", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
+            // Validate inputs
+            if (updatedName.isNotEmpty() && updatedEmail.isNotEmpty()) {
+                updateUserData(userId, updatedName, updatedEmail)
+            } else {
+                Toast.makeText(this, "Please fill out both fields", Toast.LENGTH_SHORT).show()
             }
+        }
+    }
 
-            if (currentUser != null) {
-                val userId = currentUser.uid
-                val dbRef = FirebaseHelper.getReference("users").child(userId)
+    private fun updateUserData(userId: String?, name: String, email: String) {
+        if (userId != null) {
+            val userUpdates = mapOf(
+                "name" to name,
+                "email" to email
+            )
 
-                // Menggunakan FirebaseHelper untuk update data pengguna
-                val updates = mapOf(
-                    "name" to updatedName,
-                    "email" to updatedEmail
-                )
+            // Update the user data in Firebase
+            database.child("users").child(userId).updateChildren(userUpdates)
+                .addOnSuccessListener {
+                    // Data updated successfully
+                    Toast.makeText(this, "Data updated successfully", Toast.LENGTH_SHORT).show()
+                    Log.d("UserProfile", "User data updated: name = $name, email = $email")
 
-                dbRef.updateChildren(updates).addOnSuccessListener {
-                    Toast.makeText(this, "Profil berhasil diperbarui", Toast.LENGTH_SHORT).show()
-                }.addOnFailureListener { e ->
-                    Toast.makeText(this, "Gagal memperbarui profil: ${e.message}", Toast.LENGTH_SHORT).show()
+                    // Update UI with the new data
+                    runOnUiThread {
+                        // Update EditText with new values
+                        etName.setText(name)
+                        etEmail.setText(email)
+
+                        // Optionally, update the TextView as well
+                        tvWelcome.text = "Welcome, $name"
+                    }
                 }
-            }
+                .addOnFailureListener { exception ->
+                    // Show error if update fails
+                    Toast.makeText(this, "Failed to update data: ${exception.message}", Toast.LENGTH_SHORT).show()
+                    Log.e("UserProfile", "Error updating data: ${exception.message}")
+                }
+        }
+    }
+
+
+    override fun onStart() {
+        super.onStart()
+        if (auth.currentUser == null) {
+            // Redirect to login if user is not logged in
+            val intent = Intent(this@UserProfileActivity, MainActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(intent)
         }
     }
 }

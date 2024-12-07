@@ -1,3 +1,6 @@
 <resources>
-    <string name="app_name">hewan</string>
+    <string name="app_name">Hewan</string>
+    <string name="pet_photo">Pet Photo</string>
+    <string name="pet_name">Pet Name</string>
+    <string name="species">Species</string>
 </resources>

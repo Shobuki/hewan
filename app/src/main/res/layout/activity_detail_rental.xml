@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp">
@@ -10,30 +9,69 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- Nama Hewan -->
-        <TextView
-            android:id="@+id/tvPetName"
+        <ImageView
+            android:id="@+id/petImage"
             android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:scaleType="centerCrop"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:id="@+id/petName"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Nama Hewan"
-            android:textSize="24sp"
+            android:text="Pet Name"
+            android:textSize="20sp"
             android:textStyle="bold"
             android:layout_marginBottom="8dp" />
 
-        <!-- Deskripsi Hewan -->
         <TextView
-            android:id="@+id/tvPetDescription"
-            android:layout_width="match_parent"
+            android:id="@+id/petSpecies"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Deskripsi Hewan"
+            android:text="Species: Cat"
+            android:textSize="16sp"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/petCategory"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Category: Domestic"
+            android:textSize="16sp"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/petDescription"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Description: Lorem ipsum dolor sit amet"
+            android:textSize="16sp"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/petStock"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Stock: 5"
+            android:textSize="16sp"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/petStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Status: Ready"
+            android:textSize="16sp"
             android:layout_marginBottom="16dp" />
 
-        <!-- Tombol Rental -->
+        <!-- Tambahkan tombol Rent -->
         <Button
             android:id="@+id/btnRent"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Sewa Hewan"
+            android:text="Rent"
+            android:textSize="16sp"
             android:layout_marginTop="16dp" />
     </LinearLayout>
 </ScrollView>
